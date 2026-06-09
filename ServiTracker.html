@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ServiTrack – Service Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e63946">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ServiTrack">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f6fa; min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 18px 20px; text-align: center; }
+    .header h1 { color: #fff; font-size: 22px; letter-spacing: 1px; }
+    .header p { color: #a0aec0; font-size: 12px; margin-top: 3px; }
+    .container { max-width: 480px; margin: 20px auto; padding: 0 16px; }
+    .category-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+    .tab { padding: 8px 14px; border-radius: 20px; border: 2px solid #e2e8f0; background: white; font-size: 13px; cursor: pointer; white-space: nowrap; color: #718096; transition: all 0.2s; }
+    .tab.active { border-color: #e63946; background: #e63946; color: white; }
+    .card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .category-badge { display: inline-flex; align-items: center; gap: 6px; background: #fff5f5; color: #e63946; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 5px; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; color: #2d3748; background: #f8fafc; transition: border 0.2s; appearance: none; }
+    input:focus, select:focus { outline: none; border-color: #e63946; background: white; }
+    .delivery-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .quick-btn { padding: 8px 6px; border-radius: 10px; border: 2px solid #e2e8f0; background: white; font-size: 12px; cursor: pointer; text-align: center; color: #718096; transition: all 0.2s; }
+    .quick-btn.selected { border-color: #e63946; background: #fff5f5; color: #e63946; font-weight: 700; }
+    .status-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .status-btn { padding: 10px 6px; border-radius: 10px; border: 2px solid #e2e8f0; background: white; font-size: 12px; cursor: pointer; text-align: center; color: #718096; transition: all 0.2s; }
+    .status-btn.selected { border-color: #e63946; background: #fff5f5; color: #e63946; font-weight: 700; }
+    .status-btn .icon { font-size: 18px; display: block; margin-bottom: 3px; }
+    .submit-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #e63946, #c1121f); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; margin-top: 20px; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(230,57,70,0.3); }
+    .entries-section { margin-top: 24px; }
+    .entries-title { font-size: 14px; font-weight: 700; color: #4a5568; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .search-box { background: white; border-radius: 14px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
+    .search-row { position: relative; margin-bottom: 10px; }
+    .search-row input { padding-left: 36px; }
+    .search-row::before { content: '🔍'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; z-index: 1; }
+    .date-search-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .date-search-row input[type="date"] { font-size: 13px; padding: 9px 10px; }
+    .date-label { font-size: 11px; color: #a0aec0; margin-bottom: 3px; display: block; }
+    .clear-btn { width: 100%; padding: 7px; background: #f7fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; color: #718096; font-size: 12px; cursor: pointer; margin-top: 8px; }
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+    .filter-btn { padding: 6px 14px; border-radius: 20px; border: 2px solid #e2e8f0; background: white; font-size: 12px; cursor: pointer; white-space: nowrap; color: #718096; }
+    .filter-btn.active { border-color: #1a1a2e; background: #1a1a2e; color: white; }
+    .entry-card { background: white; border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: flex-start; }
+    .entry-info { flex: 1; }
+    .entry-name { font-weight: 700; font-size: 14px; color: #2d3748; }
+    .entry-detail { font-size: 12px; color: #718096; margin-top: 2px; }
+    .entry-category { font-size: 11px; color: #e63946; font-weight: 600; margin-top: 2px; }
+    .entry-date { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+    .entry-delivery { font-size: 11px; color: #276749; font-weight: 600; margin-top: 2px; }
+    .entry-status { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-received { background: #ebf8ff; color: #2b6cb0; }
+    .status-inprogress { background: #fef3c7; color: #92400e; }
+    .status-ready { background: #f0fff4; color: #276749; }
+    .action-btns { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .update-btn { background: none; border: 1.5px solid #e63946; color: #e63946; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+    .delete-btn { background: none; border: 1.5px solid #fc8181; color: #e53e3e; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2d3748; color: white; padding: 12px 20px; border-radius: 10px; font-size: 13px; display: none; z-index: 999; }
+    .confirm-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .confirm-overlay.show { display: flex; }
+    .confirm-box { background: white; border-radius: 16px; padding: 24px; margin: 20px; text-align: center; }
+    .confirm-box h3 { color: #2d3748; margin-bottom: 8px; }
+    .confirm-box p { color: #718096; font-size: 13px; margin-bottom: 20px; }
+    .confirm-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-cancel { padding: 10px; border: 2px solid #e2e8f0; background: white; border-radius: 10px; cursor: pointer; font-size: 14px; }
+    .btn-delete { padding: 10px; border: none; background: #e63946; color: white; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚙️ ServiTrack</h1>
+  <p>Service Status Tracker — WhatsApp Notification</p>
+</div>
+
+<div class="container">
+
+  <div class="category-tabs">
+    <button class="tab active" onclick="setCategory('bike', this)">🏍️ Bike</button>
+    <button class="tab" onclick="setCategory('mobile', this)">📱 Mobile</button>
+    <button class="tab" onclick="setCategory('electronic', this)">💻 Electronic</button>
+    <button class="tab" onclick="setCategory('other', this)">🔧 Other</button>
+  </div>
+
+  <div class="card">
+    <div class="category-badge" id="categoryBadge">🏍️ Bike Repair</div>
+    <label>Customer Name</label>
+    <input type="text" id="custName" placeholder="e.g. Ramesh Kumar">
+    <label>Phone Number</label>
+    <input type="tel" id="custPhone" placeholder="e.g. 9876543210">
+    <label id="itemLabel">Bike Number / Model</label>
+    <input type="text" id="itemDetail" placeholder="e.g. UP32 AB 1234">
+    <label>Problem / Kaam</label>
+    <input type="text" id="problem" placeholder="e.g. Oil change, Screen repair">
+    <label>📅 Aane Ki Date</label>
+    <input type="date" id="entryDate">
+    <label>🗓️ Expected Delivery</label>
+    <div class="delivery-row">
+      <div class="quick-btn" onclick="setQuickDelivery(1,this)">Kal (1 Din)</div>
+      <div class="quick-btn" onclick="setQuickDelivery(3,this)">3 Din</div>
+      <div class="quick-btn" onclick="setQuickDelivery(7,this)">1 Hapta</div>
+      <div class="quick-btn" onclick="setQuickDelivery(15,this)">15 Din</div>
+    </div>
+    <input type="date" id="deliveryDate" style="margin-top:8px;">
+    <label>Status</label>
+    <div class="status-row">
+      <div class="status-btn selected" onclick="setStatus('Received',this)"><span class="icon">📥</span>Received</div>
+      <div class="status-btn" onclick="setStatus('In Progress',this)"><span class="icon">🔧</span>In Progress</div>
+      <div class="status-btn" onclick="setStatus('Ready',this)"><span class="icon">✅</span>Ready</div>
+    </div>
+    <button class="submit-btn" onclick="submitEntry()">📲 Send WhatsApp & Save</button>
+  </div>
+
+  <div class="entries-section">
+    <div class="entries-title">
+      📋 Entries
+      <span id="entryCount" style="background:#e63946;color:white;padding:2px 8px;border-radius:10px;font-size:11px;">0</span>
+    </div>
+
+    <div class="search-box">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Naam ya number se dhundho..." oninput="renderEntries()">
+      </div>
+      <div class="date-search-row">
+        <div>
+          <span class="date-label">📅 Aane Ki Date</span>
+          <input type="date" id="searchDate" onchange="renderEntries()">
+        </div>
+        <div>
+          <span class="date-label">🗓️ Delivery Date</span>
+          <input type="date" id="searchDelivery" onchange="renderEntries()">
+        </div>
+      </div>
+      <button class="clear-btn" onclick="clearSearch()">✖ Search Clear Karo</button>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-btn active" onclick="filterDate('all',this)">📋 Sab</button>
+      <button class="filter-btn" onclick="filterDate('today',this)">📅 Aaj</button>
+      <button class="filter-btn" onclick="filterDate('week',this)">📆 Hapta</button>
+      <button class="filter-btn" onclick="filterDate('month',this)">🗓️ Mahina</button>
+    </div>
+
+    <div id="entriesList"></div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>🗑️ Delete Karein?</h3>
+    <p>Yeh entry hamesha ke liye delete ho jayegi!</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">❌ Cancel</button>
+      <button class="btn-delete" onclick="confirmDelete()">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentCategory = 'bike';
+  let currentStatus = 'Received';
+  let currentFilter = 'all';
+  let deleteId = null;
+  let entries = JSON.parse(localStorage.getItem('servitrack_entries') || '[]');
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('entryDate').value = today;
+  const def3 = new Date(); def3.setDate(def3.getDate()+3);
+  document.getElementById('deliveryDate').value = def3.toISOString().split('T')[0];
+
+  const categoryConfig = {
+    bike:       { badge:'🏍️ Bike Repair',      label:'Bike Number / Model',  placeholder:'e.g. UP32 AB 1234' },
+    mobile:     { badge:'📱 Mobile Repair',     label:'Mobile Model',         placeholder:'e.g. Samsung A52' },
+    electronic: { badge:'💻 Electronic Repair', label:'Device Name / Model',  placeholder:'e.g. Dell Laptop, LG TV' },
+    other:      { badge:'🔧 Other Service',     label:'Item / Description',   placeholder:'e.g. AC, Fridge, Watch' }
+  };
+
+  const statusMessages = {
+    'Received':    function(n,i,c,d){ return 'Namaste ' + n + '! \u2705 Aapka ' + c + ' *' + i + '* humne receive kar liya hai.\n\n\uD83D\uDDD3\uFE0F Expected Delivery: *' + d + '*\n\nKaam shuru hone par update karenge. - ServiTrack'; },
+    'In Progress': function(n,i,c,d){ return 'Namaste ' + n + '! \uD83D\uDD27 Aapke ' + c + ' *' + i + '* ka kaam chal raha hai.\n\n\uD83D\uDDD3\uFE0F Expected Delivery: *' + d + '*\n\nThodi der mein ready hoga! - ServiTrack'; },
+    'Ready':       function(n,i,c,d){ return 'Namaste ' + n + '! \uD83C\uDF89 Aapka ' + c + ' *' + i + '* bilkul READY hai! Aap aa sakte hain. - ServiTrack'; }
+  };
+
+  function openWhatsApp(phone, message) {
+    var url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function setCategory(cat, el) {
+    currentCategory = cat;
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    el.classList.add('active');
+    var cfg = categoryConfig[cat];
+    document.getElementById('categoryBadge').textContent = cfg.badge;
+    document.getElementById('itemLabel').textContent = cfg.label;
+    document.getElementById('itemDetail').placeholder = cfg.placeholder;
+  }
+
+  function setStatus(status, el) {
+    currentStatus = status;
+    document.querySelectorAll('.status-btn').forEach(function(b){ b.classList.remove('selected'); });
+    el.classList.add('selected');
+  }
+
+  function setQuickDelivery(days, el) {
+    document.querySelectorAll('.quick-btn').forEach(function(b){ b.classList.remove('selected'); });
+    el.classList.add('selected');
+    var d = new Date(); d.setDate(d.getDate()+days);
+    document.getElementById('deliveryDate').value = d.toISOString().split('T')[0];
+  }
+
+  function filterDate(filter, el) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    el.classList.add('active');
+    renderEntries();
+  }
+
+  function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchDate').value = '';
+    document.getElementById('searchDelivery').value = '';
+    renderEntries();
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    return d.toLocaleDateString('hi-IN', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function getFilteredEntries() {
+    var now = new Date();
+    var search = document.getElementById('searchInput').value.toLowerCase().trim();
+    var searchDate = document.getElementById('searchDate').value;
+    var searchDelivery = document.getElementById('searchDelivery').value;
+    return entries.filter(function(e) {
+      if (search && !e.name.toLowerCase().includes(search) && !e.phone.includes(search)) return false;
+      if (searchDate && e.date !== searchDate) return false;
+      if (searchDelivery && e.delivery !== searchDelivery) return false;
+      if (currentFilter === 'today') return e.date === today;
+      if (currentFilter === 'week') { var w = new Date(now); w.setDate(now.getDate()-7); return new Date(e.date) >= w; }
+      if (currentFilter === 'month') { var dd = new Date(e.date); return dd.getMonth()===now.getMonth() && dd.getFullYear()===now.getFullYear(); }
+      return true;
+    });
+  }
+
+  function submitEntry() {
+    var name     = document.getElementById('custName').value.trim();
+    var phone    = document.getElementById('custPhone').value.trim();
+    var item     = document.getElementById('itemDetail').value.trim();
+    var prob     = document.getElementById('problem').value.trim();
+    var date     = document.getElementById('entryDate').value;
+    var delivery = document.getElementById('deliveryDate').value;
+
+    if (!name || !phone || !item) { showToast('⚠️ Name, Phone aur Item zaroori hai!'); return; }
+
+    var phoneClean = phone.replace(/\D/g,'').slice(-10);
+    var catName = currentCategory.charAt(0).toUpperCase()+currentCategory.slice(1);
+    var message = statusMessages[currentStatus](name, item, catName, formatDate(delivery));
+    openWhatsApp(phoneClean, message);
+
+    entries.unshift({ id:Date.now(), name:name, phone:phoneClean, item:item, problem:prob, category:currentCategory, status:currentStatus, date:date, delivery:delivery, time:new Date().toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}) });
+    localStorage.setItem('servitrack_entries', JSON.stringify(entries));
+    renderEntries();
+    showToast('✅ Entry save ho gayi!');
+
+    document.getElementById('custName').value='';
+    document.getElementById('custPhone').value='';
+    document.getElementById('itemDetail').value='';
+    document.getElementById('problem').value='';
+    document.getElementById('entryDate').value=today;
+    document.querySelectorAll('.quick-btn').forEach(function(b){ b.classList.remove('selected'); });
+  }
+
+  function updateStatus(id) {
+    var entry = entries.find(function(e){ return e.id===id; });
+    if (!entry) return;
+    var statuses = ['Received','In Progress','Ready'];
+    var next = statuses[(statuses.indexOf(entry.status)+1)%statuses.length];
+    entry.status = next;
+    localStorage.setItem('servitrack_entries', JSON.stringify(entries));
+    var catName = entry.category.charAt(0).toUpperCase()+entry.category.slice(1);
+    var message = statusMessages[next](entry.name, entry.item, catName, formatDate(entry.delivery));
+    openWhatsApp(entry.phone, message);
+    renderEntries();
+    showToast('📲 Status updated: ' + next);
+  }
+
+  function deleteEntry(id) { deleteId=id; document.getElementById('confirmOverlay').classList.add('show'); }
+  function closeConfirm() { deleteId=null; document.getElementById('confirmOverlay').classList.remove('show'); }
+  function confirmDelete() {
+    entries = entries.filter(function(e){ return e.id!==deleteId; });
+    localStorage.setItem('servitrack_entries', JSON.stringify(entries));
+    closeConfirm(); renderEntries();
+    showToast('🗑️ Entry delete ho gayi!');
+  }
+
+  function renderEntries() {
+    var list = document.getElementById('entriesList');
+    var filtered = getFilteredEntries();
+    document.getElementById('entryCount').textContent = filtered.length;
+    if (filtered.length===0) { list.innerHTML='<p style="text-align:center;color:#a0aec0;font-size:13px;padding:20px;">Koi entry nahi mili</p>'; return; }
+    list.innerHTML = filtered.map(function(e) {
+      var sc = e.status==='Received'?'status-received':e.status==='In Progress'?'status-inprogress':'status-ready';
+      var ce = {bike:'🏍️',mobile:'📱',electronic:'💻',other:'🔧'}[e.category];
+      return '<div class="entry-card">'
+        + '<div class="entry-info">'
+        + '<div class="entry-name">'+e.name+'</div>'
+        + '<div class="entry-detail">📞 '+e.phone+' · ⏰ '+e.time+'</div>'
+        + '<div class="entry-category">'+ce+' '+e.item+(e.problem?' · '+e.problem:'')+'</div>'
+        + '<div class="entry-date">📅 Aaya: '+formatDate(e.date)+'</div>'
+        + (e.delivery?'<div class="entry-delivery">🗓️ Delivery: '+formatDate(e.delivery)+'</div>':'')
+        + '</div>'
+        + '<div class="action-btns">'
+        + '<span class="entry-status '+sc+'">'+e.status+'</span>'
+        + '<button class="update-btn" onclick="updateStatus('+e.id+')">Update ▶</button>'
+        + '<button class="delete-btn" onclick="deleteEntry('+e.id+')">🗑️ Delete</button>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  function showToast(msg) {
+    var t=document.getElementById('toast');
+    t.textContent=msg; t.style.display='block';
+    setTimeout(function(){ t.style.display='none'; },2500);
+  }
+
+  renderEntries();
+</script>
+</body>
+</html>
